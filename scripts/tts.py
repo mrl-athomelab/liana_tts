@@ -8,6 +8,7 @@ import time
 import playsound
 import os
 from liana_tts.srv import Liana
+import homer
 
 topic_name = 'liana_tts'
 tts_server = 'http://localhost:8585'
@@ -21,7 +22,7 @@ def send_request(text_to_speech):
     return r
 
 
-def say(text):
+def say(text, homer_face=True):
     resp = send_request(text)
     if resp["status"] == "ok":
         content = resp["content"]
@@ -31,6 +32,8 @@ def say(text):
         with open(file_name, 'wb') as f:
             f.write(content)
 
+        if homer_face:
+            homer.say(text)
         playsound.playsound(file_name, True)
 
         os.remove(file_name)
@@ -40,8 +43,16 @@ def say(text):
 
 def service_handler(req):
     text = req.input
-    say(text)
+    say(text, ':not:' in text)
     return 'ok'
+
+
+def face_controller(req):
+    mode = req.input
+    if mode in [':(', ':)', ':o', ':&', '>:', ':!']:
+        homer.change_face(mode)
+        return 'changed !'
+    return 'bad input'
 
 
 rospy.loginfo("Initializing node ...")
@@ -49,6 +60,7 @@ rospy.init_node(topic_name)
 
 rospy.loginfo("Ready to say anything !")
 rospy.Service('/{}/say'.format(topic_name), Liana, service_handler)
+rospy.Service('/{}/face'.format(topic_name), Liana, face_controller)
 
 try:
     rospy.spin()
