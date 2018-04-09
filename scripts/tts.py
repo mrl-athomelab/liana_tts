@@ -8,6 +8,7 @@ import time
 import playsound
 import os
 from liana_tts.srv import Liana
+from std_msgs.msg import String
 import homer
 
 topic_name = 'liana_tts'
@@ -59,6 +60,14 @@ rospy.loginfo("Initializing node ...")
 rospy.init_node(topic_name)
 
 rospy.loginfo("Ready to say anything !")
+
+
+def callback(req):
+    text = req.data
+    say(text, ':not:' in text)
+
+
+rospy.Subscriber('/{}/say'.format(topic_name), String, callback)
 rospy.Service('/{}/say'.format(topic_name), Liana, service_handler)
 rospy.Service('/{}/face'.format(topic_name), Liana, face_controller)
 
